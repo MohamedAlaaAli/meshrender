@@ -15,6 +15,7 @@ try:
     from OpenGL.arrays import *
 except Exception:
     import logging
+
     logging.warning('Cannot import OpenGL -- rendering will be broken!')
 
 from .constants import MAX_N_LIGHTS
@@ -25,7 +26,8 @@ from .scene_object import InstancedSceneObject
 # Create static c_void_p objects to avoid leaking memory
 C_VOID_PS = []
 for i in range(5):
-    C_VOID_PS.append(ctypes.c_void_p(4*4*i))
+    C_VOID_PS.append(ctypes.c_void_p(4 * 4 * i))
+
 
 class OpenGLRenderer(object):
     """An OpenGL 3.0+ renderer, based on PyOpenGL.
@@ -53,6 +55,7 @@ class OpenGLRenderer(object):
         self._bind_frame_buffer()
 
         # Use the depth test functionality of OpenGL. Don't clip -- many normals may be backwards.
+        glShadeModel(GL_FLAT);
         glEnable(GL_DEPTH_TEST)
         glDepthMask(GL_TRUE)
         glDepthFunc(GL_LESS)
@@ -69,19 +72,16 @@ class OpenGLRenderer(object):
         self._depth_shader = self._load_shaders(depth_vertex_shader, depth_fragment_shader)
         glBindVertexArray(0)
 
-
     def _init_gl_context(self):
         if _USE_EGL_OFFSCREEN:
             self._init_egl()
         else:
             self._init_pyglet()
 
-
     def _make_gl_context_current(self):
         if not _USE_EGL_OFFSCREEN:
             if self._window:
                 self._window.switch_to()
-
 
     def _init_pyglet(self):
         import pyglet
@@ -104,16 +104,16 @@ class OpenGLRenderer(object):
                              '"{}"'.format(e.message))
 
     def _init_egl(self):
-        from OpenGL.EGL import EGL_SURFACE_TYPE, EGL_PBUFFER_BIT, EGL_BLUE_SIZE,    \
-                               EGL_RED_SIZE, EGL_GREEN_SIZE, EGL_DEPTH_SIZE,        \
-                               EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER, EGL_HEIGHT,   \
-                               EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT, EGL_CONFORMANT, \
-                               EGL_OPENGL_BIT, EGL_CONFIG_CAVEAT, EGL_NONE,         \
-                               EGL_DEFAULT_DISPLAY, EGL_NO_CONTEXT, EGL_WIDTH,      \
-                               EGL_OPENGL_API,                                      \
-                               eglGetDisplay, eglInitialize, eglChooseConfig,       \
-                               eglBindAPI, eglCreatePbufferSurface,                 \
-                               eglCreateContext, eglMakeCurrent, EGLConfig
+        from OpenGL.EGL import EGL_SURFACE_TYPE, EGL_PBUFFER_BIT, EGL_BLUE_SIZE, \
+            EGL_RED_SIZE, EGL_GREEN_SIZE, EGL_DEPTH_SIZE, \
+            EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER, EGL_HEIGHT, \
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT, EGL_CONFORMANT, \
+            EGL_OPENGL_BIT, EGL_CONFIG_CAVEAT, EGL_NONE, \
+            EGL_DEFAULT_DISPLAY, EGL_NO_CONTEXT, EGL_WIDTH, \
+            EGL_OPENGL_API, \
+            eglGetDisplay, eglInitialize, eglChooseConfig, \
+            eglBindAPI, eglCreatePbufferSurface, \
+            eglCreateContext, eglMakeCurrent, EGLConfig
 
         self._egl_display = None
         self._egl_surface = None
@@ -132,7 +132,7 @@ class OpenGLRenderer(object):
         ])
         major, minor = ctypes.c_long(), ctypes.c_long()
         num_configs = ctypes.c_long()
-        configs = (EGLConfig*1)()
+        configs = (EGLConfig * 1)()
 
         # Cache DISPLAY if necessary and get an off-screen EGL display
         orig_dpy = None
@@ -152,7 +152,7 @@ class OpenGLRenderer(object):
 
         # Create an EGL pbuffer
         self._egl_surface = eglCreatePbufferSurface(self._egl_display, configs[0],
-                [EGL_WIDTH, self._width, EGL_HEIGHT, self._height, EGL_NONE])
+                                                    [EGL_WIDTH, self._width, EGL_HEIGHT, self._height, EGL_NONE])
 
         # Create an EGL context
         self._egl_context = eglCreateContext(self._egl_display, configs[0], EGL_NO_CONTEXT, None)
@@ -298,6 +298,7 @@ class OpenGLRenderer(object):
     def _load_meshes(self):
         """Load the scene's meshes into vertex buffers.
         """
+        glShadeModel(GL_FLAT);
         VA_ids = glGenVertexArrays(len(self.scene.objects))
         self._buffers = []
 
@@ -320,7 +321,7 @@ class OpenGLRenderer(object):
                 glEnableVertexAttribArray(0)
                 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, null)
                 glBufferData(GL_ARRAY_BUFFER,
-                             4*3*len(mesh.vertices),
+                             4 * 3 * len(mesh.vertices),
                              np.array(mesh.vertices.flatten(), dtype=np.float32),
                              GL_STATIC_DRAW)
 
@@ -330,7 +331,7 @@ class OpenGLRenderer(object):
                 glEnableVertexAttribArray(1)
                 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, null)
                 glBufferData(GL_ARRAY_BUFFER,
-                             4*3*len(mesh.vertex_normals),
+                             4 * 3 * len(mesh.vertex_normals),
                              np.array(mesh.vertex_normals.flatten(), dtype=np.float32),
                              GL_STATIC_DRAW)
 
@@ -338,7 +339,7 @@ class OpenGLRenderer(object):
                 elementbuffer = glGenBuffers(1)
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer)
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                             4*3*len(mesh.faces),
+                             4 * 3 * len(mesh.faces),
                              np.array(mesh.faces.flatten(), dtype=np.int32),
                              GL_STATIC_DRAW)
                 self._buffers.extend([vertexbuffer, elementbuffer, normalbuffer])
@@ -352,10 +353,16 @@ class OpenGLRenderer(object):
                 glEnableVertexAttribArray(0)
                 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, null)
                 glBufferData(GL_ARRAY_BUFFER,
-                             4*3*3*len(mesh.triangles),
+                             4 * 3 * 3 * len(mesh.triangles),
                              np.array(mesh.triangles.flatten(), dtype=np.float32),
                              GL_STATIC_DRAW)
 
+                # Set up the colors
+                # colorbuffer = glGenBuffers(1)
+                # glBindBuffer(GL_ARRAY_BUFFER, colorbuffer)
+                # glEnableVertexAttribArray(2)
+                # glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, null)
+                # glBufferData(GL_ARRAY_BUFFER, 4*3*4*len(mesh.triangles), np.array(mesh.visual.vertex_colors[mesh.faces], dtype=np.float32), GL_STATIC_DRAW);
                 # Set up the normals
                 normalbuffer = glGenBuffers(1)
                 glBindBuffer(GL_ARRAY_BUFFER, normalbuffer)
@@ -364,7 +371,7 @@ class OpenGLRenderer(object):
                 normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
                 normals = normals.flatten()
                 glBufferData(GL_ARRAY_BUFFER,
-                             4*len(normals),
+                             4 * len(normals),
                              normals,
                              GL_STATIC_DRAW)
 
@@ -372,39 +379,40 @@ class OpenGLRenderer(object):
 
             glVertexAttribDivisor(0, 0)
             glVertexAttribDivisor(1, 0)
-
             # Set up model matrix buffer
             modelbuf = glGenBuffers(1)
             self._buffers.extend([modelbuf])
             glBindBuffer(GL_ARRAY_BUFFER, modelbuf)
             for i in range(4):
                 glEnableVertexAttribArray(2 + i)
-                glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, 4*16, C_VOID_PS[i])
+                glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, 4 * 16, C_VOID_PS[i])
                 glVertexAttribDivisor(2 + i, 1)
 
             if isinstance(obj, InstancedSceneObject):
-                glBufferData(GL_ARRAY_BUFFER, 4*16*len(obj.poses), None, GL_STATIC_DRAW)
+                glBufferData(GL_ARRAY_BUFFER, 4 * 16 * len(obj.poses), None, GL_STATIC_DRAW)
                 data = obj.raw_pose_data.flatten().astype(np.float32)
-                glBufferSubData(GL_ARRAY_BUFFER, 0, 4*16*len(obj.poses), data)
+                glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * 16 * len(obj.poses), data)
             else:
-                glBufferData(GL_ARRAY_BUFFER, 4*16, None, GL_STATIC_DRAW)
-                glBufferSubData(GL_ARRAY_BUFFER, 0, 4*16, np.eye(4).flatten().astype(np.float32))
+                glBufferData(GL_ARRAY_BUFFER, 4 * 16, None, GL_STATIC_DRAW)
+                glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * 16, np.eye(4).flatten().astype(np.float32))
 
             # Set up color buffer
             colorbuf = glGenBuffers(1)
             self._buffers.extend([colorbuf])
             glBindBuffer(GL_ARRAY_BUFFER, colorbuf)
             glEnableVertexAttribArray(6)
-            glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 0, C_VOID_PS[0])
-            glVertexAttribDivisor(6, 1)
+            glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 0, null)
+            glVertexAttribDivisor(6, 0)
 
-            if isinstance(obj, InstancedSceneObject):
-                glBufferData(GL_ARRAY_BUFFER, 4*3*len(obj.colors), None, GL_STATIC_DRAW)
-                data = obj.colors.flatten().astype(np.float32)
-                glBufferSubData(GL_ARRAY_BUFFER, 0, 4*3*len(obj.colors), data)
-            else:
-                glBufferData(GL_ARRAY_BUFFER, 4*3, None, GL_STATIC_DRAW)
-                glBufferSubData(GL_ARRAY_BUFFER, 0, 4*3, obj.material.color.astype(np.float32))
+            color_data = np.array(mesh.visual.vertex_colors[mesh.faces], dtype=np.float32) / 255.0
+            glBufferData(GL_ARRAY_BUFFER, 4 * 3 * 4 * len(mesh.triangles), color_data.flatten(), GL_STATIC_DRAW)
+            # if isinstance(obj, InstancedSceneObject):
+            #    glBufferData(GL_ARRAY_BUFFER, 4*3*len(obj.colors), None, GL_STATIC_DRAW)
+            #    data = obj.colors.flatten().astype(np.float32)
+            #    glBufferSubData(GL_ARRAY_BUFFER, 0, 4*3*len(obj.colors), data)
+            # else:
+            #    glBufferData(GL_ARRAY_BUFFER, 4*3, None, GL_STATIC_DRAW)
+            #    glBufferSubData(GL_ARRAY_BUFFER, 0, 4*3, obj.material.color.astype(np.float32))
 
             # Unbind all buffers
             glBindVertexArray(0)
@@ -451,9 +459,9 @@ class OpenGLRenderer(object):
                 n_instances = obj.n_instances
 
             if material.smooth:
-                glDrawElementsInstanced(GL_TRIANGLES, 3*len(mesh.faces), GL_UNSIGNED_INT, C_VOID_PS[0], n_instances)
+                glDrawElementsInstanced(GL_TRIANGLES, 3 * len(mesh.faces), GL_UNSIGNED_INT, C_VOID_PS[0], n_instances)
             else:
-                glDrawArraysInstanced(GL_TRIANGLES, 0, 3*len(mesh.faces), n_instances)
+                glDrawArraysInstanced(GL_TRIANGLES, 0, 3 * len(mesh.faces), n_instances)
 
             glBindVertexArray(0)
 
@@ -491,6 +499,15 @@ class OpenGLRenderer(object):
         glClearColor(.93, .93, 1, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+        # glDisable(GL_POINT_SMOOTH);
+        # glDisable(GL_LINE_SMOOTH);
+        # glDisable(GL_POLYGON_SMOOTH);
+        # glDisable(GL_MULTISAMPLE);
+        # glDisable(GL_DITHER);
+        # glHint(GL_POINT_SMOOTH_HINT, GL_DONT_CARE);
+        # glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE);
+        # glHint(GL_POLYGON_SMOOTH_HINT, GL_DONT_CARE);
+
         glUseProgram(self._full_shader)
 
         # Get Uniform Locations from Shader
@@ -518,19 +535,19 @@ class OpenGLRenderer(object):
 
         # Bind directional lighting
         glUniform1i(n_directional_id, len(scene.directional_lights))
-        directional_info = np.zeros((2*MAX_N_LIGHTS, 4))
+        directional_info = np.zeros((2 * MAX_N_LIGHTS, 4))
         for i, dlight in enumerate(scene.directional_lights):
-            directional_info[2*i,:] = np.hstack((dlight.color, dlight.strength))
-            directional_info[2*i+1,:] = np.hstack((dlight.direction, 0))
-        glUniform4fv(directional_id, 2*MAX_N_LIGHTS, directional_info.flatten())
+            directional_info[2 * i, :] = np.hstack((dlight.color, dlight.strength))
+            directional_info[2 * i + 1, :] = np.hstack((dlight.direction, 0))
+        glUniform4fv(directional_id, 2 * MAX_N_LIGHTS, directional_info.flatten())
 
         # Bind point lighting
         glUniform1i(n_point_id, len(scene.point_lights))
-        point_info = np.zeros((2*MAX_N_LIGHTS, 4))
+        point_info = np.zeros((2 * MAX_N_LIGHTS, 4))
         for i, plight in enumerate(scene.point_lights):
-            point_info[2*i,:] = np.hstack((plight.color, plight.strength))
-            point_info[2*i+1,:] = np.hstack((plight.location, 1))
-        glUniform4fv(point_id, 2*MAX_N_LIGHTS, point_info.flatten())
+            point_info[2 * i, :] = np.hstack((plight.color, plight.strength))
+            point_info[2 * i + 1, :] = np.hstack((plight.location, 1))
+        glUniform4fv(point_id, 2 * MAX_N_LIGHTS, point_info.flatten())
 
         for vaid, obj in zip(self._vaids, scene.objects.values()):
             if not obj.enabled:
@@ -554,9 +571,9 @@ class OpenGLRenderer(object):
                 n_instances = obj.n_instances
 
             if material.smooth:
-                glDrawElementsInstanced(GL_TRIANGLES, 3*len(mesh.faces), GL_UNSIGNED_INT, C_VOID_PS[0], n_instances)
+                glDrawElementsInstanced(GL_TRIANGLES, 3 * len(mesh.faces), GL_UNSIGNED_INT, C_VOID_PS[0], n_instances)
             else:
-                glDrawArraysInstanced(GL_TRIANGLES, 0, 3*len(mesh.faces), n_instances)
+                glDrawArraysInstanced(GL_TRIANGLES, 0, 3 * len(mesh.faces), n_instances)
 
             glBindVertexArray(0)
 
@@ -585,4 +602,3 @@ class OpenGLRenderer(object):
 
     def __del__(self):
         self.close()
-

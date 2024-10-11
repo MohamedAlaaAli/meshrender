@@ -8,7 +8,7 @@ layout(location = 0) in vec3 vertex_position_m;
 layout(location = 2) in mat4 inst_M;
 
 // Output data
-out vec4 color;
+flat out vec4 color;
 
 // Values that stay constant for the whole mesh.
 uniform mat4 P;
@@ -25,7 +25,7 @@ void main(){
 depth_fragment_shader = '''#version 330 core
 
 // Interpolated values from the vertex shaders
-in vec4 color;
+flat in vec4 color;
 
 out vec4 frag_color;
 
@@ -40,10 +40,10 @@ vertex_shader = '''#version 330 core
 layout(location = 0) in vec3 vertex_position_m;
 layout(location = 1) in vec3 vertex_normal_m;
 layout(location = 2) in mat4 inst_M;
-layout(location = 6) in vec3 object_color;
+layout(location = 6) in vec4 object_color;
 
 // Output data
-out vec4 color;
+flat out vec4 color;
 out vec4 position;
 out vec3 normal;
 
@@ -57,7 +57,7 @@ void main(){
     mat4 MVP = P * MV;
     gl_Position =  MVP * vec4(vertex_position_m, 1);
 
-    color = vec4(object_color, 1.0);
+    color = object_color;
     position = MV * vec4(vertex_position_m, 1);
     normal = normalize(MV * vec4(vertex_normal_m, 0)).xyz;
 }
@@ -68,7 +68,7 @@ fragment_shader = '''#version 330 core
 const int MAX_N_LIGHTS = 10;
 
 // Interpolated values from the vertex shaders
-in vec4 color;
+flat in vec4 color;
 in vec4 position;
 in vec3 normal;
 
@@ -136,8 +136,8 @@ void main(){
         vec3 l = vec3(V * point_light_info[2*i+1]) - vec3(position);
         float dist = length(l);
         l = l / dist;
-
-        light_color *= 1.0 / (dist * dist);
+        // TODO: XT changed the light attenuation here
+        light_color *= 1.0 / (2.0 * dist * dist);
 
         vec3 r = reflect(-l, n);
         float nldot = dot(n, l);
