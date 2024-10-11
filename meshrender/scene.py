@@ -1,6 +1,6 @@
 import numpy as np
 
-from perception import BinaryImage, ColorImage, DepthImage, RgbdImage, GdImage, RenderMode
+from autolab_core import BinaryImage, ColorImage, DepthImage, RgbdImage, GdImage
 
 from .camera import VirtualCamera
 from .scene_object import SceneObject
