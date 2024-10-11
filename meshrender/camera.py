@@ -2,7 +2,7 @@
 """
 import numpy as np
 
-from perception import CameraIntrinsics
+from autolab_core import CameraIntrinsics
 from autolab_core import RigidTransform
 
 from .constants import Z_NEAR, Z_FAR
